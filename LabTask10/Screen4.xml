@@ -1,0 +1,23 @@
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:orientation="vertical"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent">
+
+    <TextView
+        android:text="Seat Legend: Green Available | Red Booked | Blue Selected"/>
+
+    <GridView
+        android:id="@+id/gridView"
+        android:numColumns="6"
+        android:layout_width="match_parent"
+        android:layout_height="0dp"
+        android:layout_weight="1"/>
+
+    <TextView
+        android:id="@+id/summary"
+        android:text="0 selected | $0"/>
+
+    <Button
+        android:text="Confirm Booking"/>
+
+</LinearLayout>

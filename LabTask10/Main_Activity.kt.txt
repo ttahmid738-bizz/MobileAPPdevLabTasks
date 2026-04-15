@@ -1,0 +1,98 @@
+import android.content.Context
+import android.view.LayoutInflater
+import android.view.View
+import android.view.ViewGroup
+import android.widget.*
+import androidx.recyclerview.widget.RecyclerView
+
+class EventAdapter(
+    private val context: Context,
+    private var list: List<Event>,
+    private val onClick: (Event) -> Unit
+) : RecyclerView.Adapter<EventAdapter.VH>() {
+
+    class VH(view: View) : RecyclerView.ViewHolder(view) {
+        val title: TextView = view.findViewById(android.R.id.text1)
+        val venue: TextView = view.findViewById(android.R.id.text2)
+    }
+
+    override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): VH {
+        val view = LayoutInflater.from(context)
+            .inflate(android.R.layout.simple_list_item_2, parent, false)
+        return VH(view)
+    }
+
+    override fun getItemCount() = list.size
+
+    override fun onBindViewHolder(holder: VH, position: Int) {
+        val event = list[position]
+        holder.title.text = event.title
+        holder.venue.text = event.venue
+
+        holder.itemView.setOnClickListener {
+            onClick(event)
+        }
+    }
+
+    fun filter(newList: List<Event>) {
+        list = newList
+        notifyDataSetChanged()
+    }
+}
+
+class SeatActivity : AppCompatActivity() {
+
+    private val seats = MutableList(48) { SeatState.AVAILABLE }
+
+    enum class SeatState { AVAILABLE, BOOKED, SELECTED }
+
+    override fun onCreate(savedInstanceState: Bundle?) {
+        super.onCreate(savedInstanceState)
+        setContentView(R.layout.activity_seat)
+
+        val grid = findViewById<GridView>(R.id.gridView)
+
+        for (i in seats.indices) {
+            if ((0..100).random() < 30) {
+                seats[i] = SeatState.BOOKED
+            }
+        }
+
+        grid.adapter = object : BaseAdapter() {
+
+            override fun getCount() = seats.size
+            override fun getItem(position: Int) = seats[position]
+            override fun getItemId(position: Int) = position.toLong()
+
+            override fun getView(pos: Int, convertView: View?, parent: ViewGroup?): View {
+
+                val btn = Button(this@SeatActivity)
+
+                val state = seats[pos]
+
+                btn.text = (pos + 1).toString()
+
+                btn.setBackgroundColor(
+                    when (state) {
+                        SeatState.AVAILABLE -> 0xFF4CAF50.toInt()
+                        SeatState.BOOKED -> 0xFFF44336.toInt()
+                        SeatState.SELECTED -> 0xFF2196F3.toInt()
+                    }
+                )
+
+                btn.setOnClickListener {
+                    if (seats[pos] != SeatState.BOOKED) {
+                        seats[pos] =
+                            if (seats[pos] == SeatState.SELECTED)
+                                SeatState.AVAILABLE
+                            else SeatState.SELECTED
+
+                        notifyDataSetChanged()
+                    }
+                }
+
+                return btn
+            }
+        }
+    }
+}
