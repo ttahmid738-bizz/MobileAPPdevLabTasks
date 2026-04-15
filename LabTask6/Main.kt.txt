@@ -1,0 +1,67 @@
+import android.content.Intent
+import android.os.Bundle
+import android.widget.*
+import androidx.appcompat.app.AppCompatActivity
+import androidx.core.widget.NestedScrollView
+
+class MainActivity : AppCompatActivity() {
+
+    private var isBookmarked = false
+
+    override fun onCreate(savedInstanceState: Bundle?) {
+        super.onCreate(savedInstanceState)
+        setContentView(R.layout.activity_main)
+
+        val scrollView = findViewById<NestedScrollView>(R.id.scrollView)
+
+        val intro = findViewById<TextView>(R.id.intro)
+        val key = findViewById<TextView>(R.id.key)
+        val analysis = findViewById<TextView>(R.id.analysis)
+        val conclusion = findViewById<TextView>(R.id.conclusion)
+
+        val bookmark = findViewById<ImageView>(R.id.bookmarkBtn)
+        val share = findViewById<ImageView>(R.id.shareBtn)
+        val topBtn = findViewById<ImageButton>(R.id.topBtn)
+
+        findViewById<Button>(R.id.btnIntro).setOnClickListener {
+            scrollView.smoothScrollTo(0, intro.top)
+        }
+
+        findViewById<Button>(R.id.btnKey).setOnClickListener {
+            scrollView.smoothScrollTo(0, key.top)
+        }
+
+        findViewById<Button>(R.id.btnAnalysis).setOnClickListener {
+            scrollView.smoothScrollTo(0, analysis.top)
+        }
+
+        findViewById<Button>(R.id.btnConclusion).setOnClickListener {
+            scrollView.smoothScrollTo(0, conclusion.top)
+        }
+
+        topBtn.setOnClickListener {
+            scrollView.smoothScrollTo(0, 0)
+        }
+
+        bookmark.setOnClickListener {
+            isBookmarked = !isBookmarked
+
+            if (isBookmarked) {
+                bookmark.setImageResource(android.R.drawable.btn_star_big_on)
+                Toast.makeText(this, "Article Bookmarked", Toast.LENGTH_SHORT).show()
+            } else {
+                bookmark.setImageResource(android.R.drawable.btn_star_big_off)
+                Toast.makeText(this, "Bookmark Removed", Toast.LENGTH_SHORT).show()
+            }
+        }
+
+        share.setOnClickListener {
+            val intent = Intent(Intent.ACTION_SEND)
+            intent.type = "text/plain"
+            intent.putExtra(Intent.EXTRA_TEXT,
+                "Check this article: The Future of AI in Daily Life"
+            )
+            startActivity(Intent.createChooser(intent, "Share via"))
+        }
+    }
+}
