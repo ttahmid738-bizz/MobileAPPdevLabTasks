@@ -1,0 +1,74 @@
+package com.example.loginprofileapp
+
+import android.os.Bundle
+import android.view.View
+import android.widget.*
+import androidx.appcompat.app.AppCompatActivity
+
+class MainActivity : AppCompatActivity() {
+
+    lateinit var etUsername: EditText
+    lateinit var etPassword: EditText
+    lateinit var btnLogin: Button
+    lateinit var btnLogout: Button
+    lateinit var tvForgot: TextView
+    lateinit var progressBar: ProgressBar
+    lateinit var profileCard: LinearLayout
+
+    override fun onCreate(savedInstanceState: Bundle?) {
+        super.onCreate(savedInstanceState)
+        setContentView(R.layout.activity_main)
+
+        etUsername = findViewById(R.id.etUsername)
+        etPassword = findViewById(R.id.etPassword)
+        btnLogin = findViewById(R.id.btnLogin)
+        btnLogout = findViewById(R.id.btnLogout)
+        tvForgot = findViewById(R.id.tvForgot)
+        progressBar = findViewById(R.id.progressBar)
+        profileCard = findViewById(R.id.profileCard)
+
+        btnLogin.setOnClickListener {
+
+            val user = etUsername.text.toString()
+            val pass = etPassword.text.toString()
+
+            if (user == "admin" && pass == "1234") {
+
+                progressBar.visibility = View.VISIBLE
+
+                profileCard.postDelayed({
+
+                    progressBar.visibility = View.GONE
+
+                    etUsername.visibility = View.GONE
+                    etPassword.visibility = View.GONE
+                    btnLogin.visibility = View.GONE
+                    tvForgot.visibility = View.GONE
+
+                    profileCard.visibility = View.VISIBLE
+
+                }, 2000)
+
+            } else {
+                Toast.makeText(this, "Invalid Credentials", Toast.LENGTH_SHORT).show()
+            }
+        }
+
+        btnLogout.setOnClickListener {
+
+            profileCard.visibility = View.GONE
+
+            etUsername.visibility = View.VISIBLE
+            etPassword.visibility = View.VISIBLE
+            btnLogin.visibility = View.VISIBLE
+            tvForgot.visibility = View.VISIBLE
+
+            etUsername.text.clear()
+            etPassword.text.clear()
+        }
+
+        tvForgot.setOnClickListener {
+            Toast.makeText(this, "Password reset link sent to your email", Toast.LENGTH_SHORT).show()
+        }
+    }
+}
