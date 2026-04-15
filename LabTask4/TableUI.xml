@@ -1,0 +1,89 @@
+<?xml version="1.0" encoding="utf-8"?>
+<ScrollView xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent">
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="vertical"
+        android:padding="12dp">
+
+        <TextView
+            android:text="Student Name: Rahim"
+            android:textStyle="bold"/>
+
+        <TextView
+            android:text="Student ID: 2026001"/>
+
+        <TextView
+            android:text="Semester: 4th"/>
+
+        <TextView
+            android:text="Department: CSE"
+            android:layout_marginBottom="12dp"/>
+
+        <TableLayout
+            android:id="@+id/tableLayout"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:stretchColumns="*">
+
+            <TableRow android:background="#D3D3D3">
+
+                <TextView
+                    android:text="Subject"
+                    android:textStyle="bold"
+                    android:padding="8dp"/>
+
+                <TextView
+                    android:text="Obtained"
+                    android:textStyle="bold"
+                    android:padding="8dp"/>
+
+                <TextView
+                    android:text="Total"
+                    android:textStyle="bold"
+                    android:padding="8dp"/>
+
+                <TextView
+                    android:text="Grade"
+                    android:textStyle="bold"
+                    android:padding="8dp"/>
+            </TableRow>
+
+        </TableLayout>
+
+        <TextView
+            android:id="@+id/gpaText"
+            android:text="GPA: 0.0"
+            android:textSize="20sp"
+            android:textStyle="bold"
+            android:layout_marginTop="12dp"/>
+
+        <EditText
+            android:id="@+id/subjectInput"
+            android:hint="Subject Name"/>
+
+        <EditText
+            android:id="@+id/marksInput"
+            android:hint="Obtained Marks"
+            android:inputType="number"/>
+
+        <EditText
+            android:id="@+id/totalInput"
+            android:hint="Total Marks"
+            android:inputType="number"/>
+
+        <Button
+            android:id="@+id/addBtn"
+            android:text="Add Subject"/>
+
+        <Button
+            android:id="@+id/shareBtn"
+            android:text="Print / Share"
+            android:layout_marginTop="10dp"/>
+
+    </LinearLayout>
+
+</ScrollView>

@@ -1,0 +1,118 @@
+package com.example.gradereportapp
+
+import android.graphics.Color
+import android.os.Bundle
+import android.widget.*
+import androidx.appcompat.app.AppCompatActivity
+
+class MainActivity : AppCompatActivity() {
+
+    private lateinit var tableLayout: TableLayout
+    private lateinit var gpaText: TextView
+
+    private var totalPoints = 0.0
+    private var subjectCount = 0
+
+    override fun onCreate(savedInstanceState: Bundle?) {
+        super.onCreate(savedInstanceState)
+        setContentView(R.layout.activity_main)
+
+        tableLayout = findViewById(R.id.tableLayout)
+        gpaText = findViewById(R.id.gpaText)
+
+        val subjectInput = findViewById<EditText>(R.id.subjectInput)
+        val marksInput = findViewById<EditText>(R.id.marksInput)
+        val totalInput = findViewById<EditText>(R.id.totalInput)
+        val addBtn = findViewById<Button>(R.id.addBtn)
+
+        addBtn.setOnClickListener {
+
+            val subject = subjectInput.text.toString()
+            val obtained = marksInput.text.toString().toIntOrNull()
+            val total = totalInput.text.toString().toIntOrNull()
+
+            if (subject.isEmpty() || obtained == null || total == null || total == 0) {
+                Toast.makeText(this, "Invalid input", Toast.LENGTH_SHORT).show()
+                return@setOnClickListener
+            }
+
+            val percentage = (obtained * 100) / total
+            val grade = getGrade(percentage)
+            val gpa = getGpa(grade)
+
+            addTableRow(subject, obtained, total, grade, percentage >= 40)
+
+            totalPoints += gpa
+            subjectCount++
+
+            val finalGpa = totalPoints / subjectCount
+            gpaText.text = "GPA: %.2f".format(finalGpa)
+
+            subjectInput.text.clear()
+            marksInput.text.clear()
+            totalInput.text.clear()
+        }
+    }
+
+    private fun addTableRow(
+        subject: String,
+        obtained: Int,
+        total: Int,
+        grade: String,
+        isPass: Boolean
+    ) {
+        val row = TableRow(this)
+
+        val subjectTv = TextView(this)
+        val obtainedTv = TextView(this)
+        val totalTv = TextView(this)
+        val gradeTv = TextView(this)
+
+        subjectTv.text = subject
+        obtainedTv.text = obtained.toString()
+        totalTv.text = total.toString()
+        gradeTv.text = grade
+
+        subjectTv.setPadding(8, 8, 8, 8)
+        obtainedTv.setPadding(8, 8, 8, 8)
+        totalTv.setPadding(8, 8, 8, 8)
+        gradeTv.setPadding(8, 8, 8, 8)
+
+        if (!isPass) {
+            row.setBackgroundColor(Color.parseColor("#FFCDD2")) // red
+        } else {
+            row.setBackgroundColor(Color.parseColor("#C8E6C9")) // green
+        }
+
+        row.addView(subjectTv)
+        row.addView(obtainedTv)
+        row.addView(totalTv)
+        row.addView(gradeTv)
+
+        tableLayout.addView(row)
+    }
+
+    private fun getGrade(percent: Int): String {
+        return when {
+            percent >= 90 -> "A+"
+            percent >= 80 -> "A"
+            percent >= 70 -> "B+"
+            percent >= 60 -> "B"
+            percent >= 50 -> "C"
+            percent >= 40 -> "D"
+            else -> "F"
+        }
+    }
+
+    private fun getGpa(grade: String): Double {
+        return when (grade) {
+            "A+" -> 4.0
+            "A" -> 3.7
+            "B+" -> 3.3
+            "B" -> 3.0
+            "C" -> 2.0
+            "D" -> 1.0
+            else -> 0.0
+        }
+    }
+}
