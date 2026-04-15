@@ -1,0 +1,89 @@
+<?xml version="1.0" encoding="utf-8"?>
+<ScrollView xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent">
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="vertical"
+        android:padding="16dp">
+
+        <TextView
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="Student Registration Form"
+            android:textSize="22sp"
+            android:textStyle="bold"
+            android:gravity="center"
+            android:layout_marginBottom="16dp"/>
+
+        <EditText
+            android:id="@+id/etId"
+            android:hint="Enter Student ID"
+            android:inputType="number"
+            android:layout_marginBottom="10dp"/>
+
+        <EditText
+            android:id="@+id/etName"
+            android:hint="Enter Full Name"
+            android:layout_marginBottom="10dp"/>
+
+        <EditText
+            android:id="@+id/etEmail"
+            android:hint="Enter Email Address"
+            android:inputType="textEmailAddress"
+            android:layout_marginBottom="10dp"/>
+
+        <EditText
+            android:id="@+id/etPassword"
+            android:hint="Enter Password"
+            android:inputType="textPassword"
+            android:layout_marginBottom="10dp"/>
+
+        <EditText
+            android:id="@+id/etAge"
+            android:hint="Enter Age"
+            android:inputType="number"
+            android:layout_marginBottom="10dp"/>
+
+        <TextView android:text="Gender"/>
+
+        <RadioGroup
+            android:id="@+id/radioGroup">
+            <RadioButton android:id="@+id/rbMale" android:text="Male"/>
+            <RadioButton android:id="@+id/rbFemale" android:text="Female"/>
+            <RadioButton android:id="@+id/rbOther" android:text="Other"/>
+        </RadioGroup>
+
+        <TextView android:text="Favorite Sports"/>
+
+        <CheckBox android:id="@+id/cbFootball" android:text="Football"/>
+        <CheckBox android:id="@+id/cbCricket" android:text="Cricket"/>
+        <CheckBox android:id="@+id/cbBasketball" android:text="Basketball"/>
+        <CheckBox android:id="@+id/cbBadminton" android:text="Badminton"/>
+
+        <TextView android:text="Select Country"/>
+
+        <Spinner
+            android:id="@+id/spCountry"
+            android:layout_marginBottom="10dp"/>
+
+        <TextView android:text="Date of Birth"/>
+
+        <Button
+            android:id="@+id/btnDate"
+            android:text="Select Date"/>
+
+        <Button
+            android:id="@+id/btnSubmit"
+            android:text="Submit"
+            android:layout_marginTop="10dp"/>
+
+        <Button
+            android:id="@+id/btnReset"
+            android:text="Reset"
+            android:layout_marginTop="10dp"/>
+
+    </LinearLayout>
+</ScrollView>
