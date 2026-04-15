@@ -1,0 +1,139 @@
+import android.app.AlertDialog
+import android.os.Bundle
+import android.text.Editable
+import android.text.TextWatcher
+import android.view.LayoutInflater
+import android.widget.*
+import androidx.appcompat.app.AppCompatActivity
+
+class MainActivity : AppCompatActivity() {
+
+    private lateinit var listView: ListView
+    private lateinit var searchView: SearchView
+    private lateinit var emptyView: TextView
+
+    private lateinit var adapter: ContactAdapter
+    private val contactList = ArrayList<Contact>()
+    private val filteredList = ArrayList<Contact>()
+
+    override fun onCreate(savedInstanceState: Bundle?) {
+        super.onCreate(savedInstanceState)
+        setContentView(R.layout.activity_main)
+
+        listView = findViewById(R.id.listView)
+        searchView = findViewById(R.id.searchView)
+        emptyView = findViewById(R.id.emptyView)
+
+        // sample data
+        contactList.add(Contact("Rahim", "01711111111", "rahim@gmail.com", "R"))
+        contactList.add(Contact("Karim", "01822222222", "karim@gmail.com", "K"))
+
+        filteredList.addAll(contactList)
+
+        adapter = ContactAdapter(this, filteredList)
+        listView.adapter = adapter
+
+        updateEmptyState()
+
+        // FAB
+        findViewById<View>(R.id.fab).setOnClickListener {
+            showAddDialog()
+        }
+
+        // Click
+        listView.setOnItemClickListener { _, _, position, _ ->
+            val c = filteredList[position]
+            Toast.makeText(
+                this,
+                "${c.name}\n${c.phone}\n${c.email}",
+                Toast.LENGTH_LONG
+            ).show()
+        }
+
+        // Long click delete
+        listView.setOnItemLongClickListener { _, _, position, _ ->
+            AlertDialog.Builder(this)
+                .setTitle("Delete Contact?")
+                .setMessage("Are you sure?")
+                .setPositiveButton("Yes") { _, _ ->
+                    val contact = filteredList[position]
+                    contactList.remove(contact)
+                    filteredList.remove(contact)
+                    adapter.notifyDataSetChanged()
+                    updateEmptyState()
+                }
+                .setNegativeButton("No", null)
+                .show()
+            true
+        }
+
+        // Search
+        searchView.setOnQueryTextListener(object : SearchView.OnQueryTextListener {
+            override fun onQueryTextSubmit(query: String?) = false
+
+            override fun onQueryTextChange(newText: String?): Boolean {
+                filter(newText ?: "")
+                return true
+            }
+        })
+    }
+
+    private fun showAddDialog() {
+
+        val view = LayoutInflater.from(this)
+            .inflate(R.layout.item_add_contact, null)
+
+        val name = view.findViewById<EditText>(R.id.nameInput)
+        val phone = view.findViewById<EditText>(R.id.phoneInput)
+        val email = view.findViewById<EditText>(R.id.emailInput)
+
+        AlertDialog.Builder(this)
+            .setTitle("Add Contact")
+            .setView(view)
+            .setPositiveButton("Add") { _, _ ->
+
+                val n = name.text.toString()
+                val p = phone.text.toString()
+                val e = email.text.toString()
+
+                if (n.isNotEmpty() && p.isNotEmpty()) {
+                    val contact = Contact(
+                        n,
+                        p,
+                        e,
+                        n.first().uppercaseChar().toString()
+                    )
+
+                    contactList.add(contact)
+                    filteredList.add(contact)
+                    adapter.notifyDataSetChanged()
+                    updateEmptyState()
+                }
+            }
+            .setNegativeButton("Cancel", null)
+            .show()
+    }
+
+    private fun filter(text: String) {
+        filteredList.clear()
+
+        for (c in contactList) {
+            if (c.name.lowercase().contains(text.lowercase())) {
+                filteredList.add(c)
+            }
+        }
+
+        adapter.notifyDataSetChanged()
+        updateEmptyState()
+    }
+
+    private fun updateEmptyState() {
+        if (filteredList.isEmpty()) {
+            listView.visibility = ListView.GONE
+            emptyView.visibility = TextView.VISIBLE
+        } else {
+            listView.visibility = ListView.VISIBLE
+            emptyView.visibility = TextView.GONE
+        }
+    }
+}
