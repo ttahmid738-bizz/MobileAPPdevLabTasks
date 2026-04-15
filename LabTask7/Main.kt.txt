@@ -1,0 +1,116 @@
+import android.content.Intent
+import android.os.Bundle
+import android.view.View
+import android.widget.*
+import androidx.appcompat.app.AppCompatActivity
+
+class MainActivity : AppCompatActivity() {
+
+    private lateinit var gridView: GridView
+    private lateinit var adapter: PhotoAdapter
+
+    private var isSelectionMode = false
+    private val photos = ArrayList<Photo>()
+    private val filtered = ArrayList<Photo>()
+
+    override fun onCreate(savedInstanceState: Bundle?) {
+        super.onCreate(savedInstanceState)
+        setContentView(R.layout.activity_main)
+
+        gridView = findViewById(R.id.gridView)
+        val selectionBar = findViewById<View>(R.id.selectionBar)
+        val selectedCount = findViewById<TextView>(R.id.selectedCount)
+
+        loadPhotos()
+        filtered.addAll(photos)
+
+        adapter = PhotoAdapter(this, filtered, false)
+        gridView.adapter = adapter
+
+        gridView.setOnItemClickListener { _, _, pos, _ ->
+            if (!isSelectionMode) {
+                val intent = Intent(this, FullscreenActivity::class.java)
+                intent.putExtra("image", filtered[pos].resourceId)
+                startActivity(intent)
+            } else {
+                toggleSelect(pos)
+                updateCount(selectedCount, selectionBar)
+            }
+        }
+
+        gridView.setOnItemLongClickListener { _, _, pos, _ ->
+            isSelectionMode = true
+            selectionBar.visibility = View.VISIBLE
+            toggleSelect(pos)
+            adapter.setSelectionMode(true)
+            updateCount(selectedCount, selectionBar)
+            true
+        }
+
+        findViewById<Button>(R.id.deleteBtn).setOnClickListener {
+
+            val iterator = filtered.iterator()
+            var removed = 0
+
+            while (iterator.hasNext()) {
+                val p = iterator.next()
+                if (p.isSelected) {
+                    iterator.remove()
+                    photos.remove(p)
+                    removed++
+                }
+            }
+
+            Toast.makeText(this, "$removed photos deleted", Toast.LENGTH_SHORT).show()
+
+            isSelectionMode = false
+            adapter.setSelectionMode(false)
+            selectionBar.visibility = View.GONE
+            adapter.notifyDataSetChanged()
+        }
+
+        findViewById<View>(R.id.fab).setOnClickListener {
+            val newPhoto = Photo(
+                photos.size + 1,
+                android.R.drawable.ic_menu_gallery,
+                "New Photo",
+                "Nature"
+            )
+
+            photos.add(newPhoto)
+            filtered.add(newPhoto)
+            adapter.notifyDataSetChanged()
+        }
+    }
+
+    private fun toggleSelect(pos: Int) {
+        filtered[pos].isSelected = !filtered[pos].isSelected
+        adapter.notifyDataSetChanged()
+    }
+
+    private fun updateCount(text: TextView, bar: View) {
+        val count = filtered.count { it.isSelected }
+        text.text = "$count selected"
+        bar.visibility = if (count > 0) View.VISIBLE else View.GONE
+    }
+
+    private fun loadPhotos() {
+
+        for (i in 1..12) {
+            photos.add(
+                Photo(
+                    i,
+                    android.R.drawable.ic_menu_gallery,
+                    "Photo $i",
+                    when (i % 5) {
+                        0 -> "Nature"
+                        1 -> "City"
+                        2 -> "Animals"
+                        3 -> "Food"
+                        else -> "Travel"
+                    }
+                )
+            )
+        }
+    }
+}
