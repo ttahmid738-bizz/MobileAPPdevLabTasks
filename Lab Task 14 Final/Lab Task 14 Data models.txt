@@ -1,0 +1,31 @@
+package com.university.newsapp.model
+
+data class Post(
+    val id: Int = 0,
+    val userId: Int = 0,
+    val title: String = "",
+    val body: String = ""
+) : java.io.Serializable
+
+data class User(
+    val id: Int = 0,
+    val name: String = "",
+    val username: String = "",
+    val email: String = "",
+    val phone: String = "",
+    val website: String = "",
+    val company: Company = Company()
+) : java.io.Serializable
+
+data class Company(
+    val name: String = "",
+    val catchPhrase: String = ""
+) : java.io.Serializable
+
+data class Comment(
+    val id: Int = 0,
+    val postId: Int = 0,
+    val name: String = "",
+    val email: String = "",
+    val body: String = ""
+)

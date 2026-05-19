@@ -1,0 +1,159 @@
+package com.university.newsapp
+
+import android.content.Intent
+import android.os.Bundle
+import android.widget.LinearLayout
+import android.widget.TextView
+import androidx.appcompat.app.AppCompatActivity
+import androidx.lifecycle.lifecycleScope
+import com.google.android.material.snackbar.Snackbar
+import com.university.newsapp.model.Post
+import com.university.newsapp.model.User
+import com.university.newsapp.network.RetrofitClient
+import kotlinx.coroutines.launch
+
+class UserProfileActivity : AppCompatActivity() {
+
+    private lateinit var user: User
+    private lateinit var tvAvatar: TextView
+    private lateinit var tvName: TextView
+    private lateinit var tvUsername: TextView
+    private lateinit var tvEmail: TextView
+    private lateinit var tvPhone: TextView
+    private lateinit var tvWebsite: TextView
+    private lateinit var tvCompany: TextView
+    private lateinit var tvCatchPhrase: TextView
+    private lateinit var containerPosts: LinearLayout
+
+    override fun onCreate(savedInstanceState: Bundle?) {
+        super.onCreate(savedInstanceState)
+        setContentView(R.layout.activity_user_profile)
+
+        supportActionBar?.setDisplayHomeAsUpEnabled(true)
+        supportActionBar?.title = "User Profile"
+
+        // Get user from intent
+        user = intent.getSerializableExtra("user") as? User ?: return
+
+        // Initialize UI
+        initializeUI()
+
+        // Display user info
+        displayUserInfo()
+
+        // Load user's posts
+        loadUserPosts()
+    }
+
+    override fun onSupportNavigateUp(): Boolean {
+        finish()
+        return true
+    }
+
+    private fun initializeUI() {
+        tvAvatar = findViewById(R.id.tvAvatar)
+        tvName = findViewById(R.id.tvName)
+        tvUsername = findViewById(R.id.tvUsername)
+        tvEmail = findViewById(R.id.tvEmail)
+        tvPhone = findViewById(R.id.tvPhone)
+        tvWebsite = findViewById(R.id.tvWebsite)
+        tvCompany = findViewById(R.id.tvCompany)
+        tvCatchPhrase = findViewById(R.id.tvCatchPhrase)
+        containerPosts = findViewById(R.id.containerPosts)
+    }
+
+    private fun displayUserInfo() {
+        // Avatar with initials
+        val initials = user.name.split(" ").mapNotNull { it.firstOrNull() }.joinToString("")
+        tvAvatar.text = initials.take(2).uppercase()
+
+        tvName.text = user.name
+        tvUsername.text = "@${user.username}"
+        tvEmail.text = user.email
+        tvPhone.text = user.phone
+        tvWebsite.text = user.website
+        tvCompany.text = user.company.name
+        tvCatchPhrase.text = user.company.catchPhrase
+    }
+
+    private fun loadUserPosts() {
+        lifecycleScope.launch {
+            try {
+                val posts = RetrofitClient.apiService.getPostsByUser(user.id)
+                displayUserPosts(posts)
+            } catch (e: Exception) {
+                Snackbar.make(
+                    tvName,
+                    "Failed to load posts: ${e.message}",
+                    Snackbar.LENGTH_SHORT
+                ).show()
+            }
+        }
+    }
+
+    private fun displayUserPosts(posts: List<Post>) {
+        if (posts.isEmpty()) {
+            val tv = TextView(this).apply {
+                text = "No posts"
+                setPadding(16, 16, 16, 16)
+            }
+            containerPosts.addView(tv)
+            return
+        }
+
+        val titleView = TextView(this).apply {
+            text = "Posts by this user"
+            textSize = 18f
+            typeface = android.graphics.Typeface.create(android.graphics.Typeface.DEFAULT, android.graphics.Typeface.BOLD)
+            setPadding(0, 16, 0, 8)
+            layoutParams = LinearLayout.LayoutParams(
+                LinearLayout.LayoutParams.MATCH_PARENT,
+                LinearLayout.LayoutParams.WRAP_CONTENT
+            )
+        }
+        containerPosts.addView(titleView)
+
+        posts.take(5).forEach { post ->
+            val postView = createPostMiniView(post)
+            containerPosts.addView(postView)
+        }
+    }
+
+    private fun createPostMiniView(post: Post): android.widget.CardView {
+        val cardView = android.widget.CardView(this).apply {
+            layoutParams = LinearLayout.LayoutParams(
+                LinearLayout.LayoutParams.MATCH_PARENT,
+                LinearLayout.LayoutParams.WRAP_CONTENT
+            ).apply {
+                setMargins(0, 4, 0, 4)
+            }
+            radius = 8f
+            cardElevation = 2f
+        }
+
+        val layout = LinearLayout(this).apply {
+            layoutParams = android.widget.CardView.LayoutParams(
+                android.widget.CardView.LayoutParams.MATCH_PARENT,
+                android.widget.CardView.LayoutParams.WRAP_CONTENT
+            )
+            orientation = LinearLayout.VERTICAL
+            setPadding(12, 12, 12, 12)
+        }
+
+        val titleView = TextView(this).apply {
+            text = post.title
+            textSize = 14f
+            typeface = android.graphics.Typeface.create(android.graphics.Typeface.DEFAULT, android.graphics.Typeface.BOLD)
+            setOnClickListener {
+                val intent = Intent(this@UserProfileActivity, PostDetailActivity::class.java)
+                intent.putExtra("post", post)
+                startActivity(intent)
+            }
+        }
+
+        layout.addView(titleView)
+        cardView.addView(layout)
+
+        return cardView
+    }
+}
