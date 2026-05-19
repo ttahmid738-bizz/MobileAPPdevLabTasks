@@ -1,0 +1,140 @@
+package com.university.studentauth
+
+import android.content.Intent
+import android.os.Bundle
+import android.text.method.HideReturnsTransformationMethod
+import android.text.method.PasswordTransformationMethod
+import android.util.Patterns
+import android.widget.*
+import androidx.appcompat.app.AppCompatActivity
+import com.google.android.material.snackbar.Snackbar
+import com.google.firebase.auth.FirebaseAuth
+
+class RegisterActivity : AppCompatActivity() {
+
+    private lateinit var etFullName: EditText
+    private lateinit var etEmail: EditText
+    private lateinit var etPassword: EditText
+    private lateinit var etConfirmPassword: EditText
+    private lateinit var ivPasswordToggle: ImageView
+    private lateinit var ivConfirmPasswordToggle: ImageView
+    private lateinit var btnRegister: Button
+    private lateinit var tvLoginLink: TextView
+    private lateinit var progressBar: ProgressBar
+    private lateinit var auth: FirebaseAuth
+
+    private var passwordVisible = false
+    private var confirmPasswordVisible = false
+
+    override fun onCreate(savedInstanceState: Bundle?) {
+        super.onCreate(savedInstanceState)
+        setContentView(R.layout.activity_register)
+
+        // Initialize Firebase Auth
+        auth = FirebaseAuth.getInstance()
+
+        // Initialize UI
+        initializeUI()
+
+        // Setup listeners
+        setupListeners()
+    }
+
+    private fun initializeUI() {
+        etFullName = findViewById(R.id.etFullName)
+        etEmail = findViewById(R.id.etEmail)
+        etPassword = findViewById(R.id.etPassword)
+        etConfirmPassword = findViewById(R.id.etConfirmPassword)
+        ivPasswordToggle = findViewById(R.id.ivPasswordToggle)
+        ivConfirmPasswordToggle = findViewById(R.id.ivConfirmPasswordToggle)
+        btnRegister = findViewById(R.id.btnRegister)
+        tvLoginLink = findViewById(R.id.tvLoginLink)
+        progressBar = findViewById(R.id.progressBar)
+    }
+
+    private fun setupListeners() {
+        ivPasswordToggle.setOnClickListener {
+            togglePasswordVisibility(etPassword, ivPasswordToggle, ::passwordVisible.setter)
+        }
+
+        ivConfirmPasswordToggle.setOnClickListener {
+            togglePasswordVisibility(etConfirmPassword, ivConfirmPasswordToggle, ::confirmPasswordVisible.setter)
+        }
+
+        btnRegister.setOnClickListener {
+            registerUser()
+        }
+
+        tvLoginLink.setOnClickListener {
+            val intent = Intent(this, LoginActivity::class.java)
+            startActivity(intent)
+            finish()
+        }
+    }
+
+    private fun togglePasswordVisibility(
+        editText: EditText,
+        imageView: ImageView,
+        visibilityToggle: (Boolean) -> Unit
+    ) {
+        if (passwordVisible) {
+            editText.transformationMethod = PasswordTransformationMethod.getInstance()
+            imageView.setImageResource(android.R.drawable.ic_menu_view)
+            passwordVisible = false
+        } else {
+            editText.transformationMethod = HideReturnsTransformationMethod.getInstance()
+            imageView.setImageResource(android.R.drawable.ic_menu_close_clear_cancel)
+            passwordVisible = true
+        }
+    }
+
+    private fun registerUser() {
+        val fullName = etFullName.text.toString().trim()
+        val email = etEmail.text.toString().trim()
+        val password = etPassword.text.toString()
+        val confirmPassword = etConfirmPassword.text.toString()
+
+        // Validation
+        if (fullName.isEmpty() || email.isEmpty() || password.isEmpty() || confirmPassword.isEmpty()) {
+            Snackbar.make(findViewById(R.id.parent), "All fields are required", Snackbar.LENGTH_SHORT).show()
+            return
+        }
+
+        if (!Patterns.EMAIL_ADDRESS.matcher(email).matches()) {
+            Snackbar.make(findViewById(R.id.parent), "Invalid email format", Snackbar.LENGTH_SHORT).show()
+            return
+        }
+
+        if (password.length < 8) {
+            Snackbar.make(findViewById(R.id.parent), "Password must be at least 8 characters", Snackbar.LENGTH_SHORT).show()
+            return
+        }
+
+        if (password != confirmPassword) {
+            Snackbar.make(findViewById(R.id.parent), "Passwords do not match", Snackbar.LENGTH_SHORT).show()
+            return
+        }
+
+        // Show progress bar
+        progressBar.visibility = ProgressBar.VISIBLE
+        btnRegister.isEnabled = false
+
+        // Create user with Firebase
+        auth.createUserWithEmailAndPassword(email, password)
+            .addOnCompleteListener(this) { task ->
+                progressBar.visibility = ProgressBar.GONE
+                btnRegister.isEnabled = true
+
+                if (task.isSuccessful) {
+                    // Registration successful
+                    val intent = Intent(this, HomeActivity::class.java)
+                    startActivity(intent)
+                    finish()
+                } else {
+                    // Registration failed
+                    val errorMessage = task.exception?.message ?: "Registration failed"
+                    Snackbar.make(findViewById(R.id.parent), errorMessage, Snackbar.LENGTH_LONG).show()
+                }
+            }
+    }
+}
