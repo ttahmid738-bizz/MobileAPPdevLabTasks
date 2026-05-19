@@ -1,0 +1,165 @@
+package com.university.coursemanager
+
+import android.content.Intent
+import android.os.Bundle
+import android.widget.ProgressBar
+import android.widget.TextView
+import androidx.appcompat.app.AppCompatActivity
+import androidx.appcompat.widget.SearchView
+import androidx.recyclerview.widget.LinearLayoutManager
+import androidx.recyclerview.widget.RecyclerView
+import com.google.android.material.floatingactionbutton.FloatingActionButton
+import com.google.android.material.snackbar.Snackbar
+import com.google.firebase.auth.FirebaseAuth
+import com.google.firebase.database.DataSnapshot
+import com.google.firebase.database.DatabaseError
+import com.google.firebase.database.FirebaseDatabase
+import com.google.firebase.database.ValueEventListener
+import com.university.coursemanager.adapter.CourseAdapter
+import com.university.coursemanager.model.Course
+
+class MainActivity : AppCompatActivity() {
+
+    private lateinit var recyclerView: RecyclerView
+    private lateinit var tvEmpty: TextView
+    private lateinit var progressBar: ProgressBar
+    private lateinit var searchView: SearchView
+    private lateinit var fabAdd: FloatingActionButton
+
+    private lateinit var adapter: CourseAdapter
+    private var allCourses = mutableListOf<Course>()
+
+    private val database = FirebaseDatabase.getInstance()
+    private val auth = FirebaseAuth.getInstance()
+
+    override fun onCreate(savedInstanceState: Bundle?) {
+        super.onCreate(savedInstanceState)
+        setContentView(R.layout.activity_main)
+
+        // Setup ActionBar
+        supportActionBar?.title = "My Courses"
+
+        // Initialize UI
+        initializeUI()
+
+        // Setup adapter
+        setupAdapter()
+
+        // Load courses from Firebase
+        loadCourses()
+
+        // Setup listeners
+        setupListeners()
+    }
+
+    private fun initializeUI() {
+        recyclerView = findViewById(R.id.recyclerViewCourses)
+        tvEmpty = findViewById(R.id.tvEmpty)
+        progressBar = findViewById(R.id.progressBar)
+        searchView = findViewById(R.id.searchView)
+        fabAdd = findViewById(R.id.fabAddCourse)
+
+        recyclerView.layoutManager = LinearLayoutManager(this)
+    }
+
+    private fun setupAdapter() {
+        adapter = CourseAdapter(
+            onEditClick = { course ->
+                val intent = Intent(this, EditCourseActivity::class.java)
+                intent.putExtra("course", course)
+                startActivity(intent)
+            },
+            onDeleteClick = { course ->
+                deleteCourse(course)
+            }
+        )
+        recyclerView.adapter = adapter
+    }
+
+    private fun setupListeners() {
+        fabAdd.setOnClickListener {
+            val intent = Intent(this, AddCourseActivity::class.java)
+            startActivity(intent)
+        }
+
+        searchView.setOnQueryTextListener(object : SearchView.OnQueryTextListener {
+            override fun onQueryTextSubmit(query: String?): Boolean = false
+
+            override fun onQueryTextChange(newText: String?): Boolean {
+                filterCourses(newText ?: "")
+                return true
+            }
+        })
+    }
+
+    private fun loadCourses() {
+        val userId = auth.currentUser?.uid ?: return
+        val coursesRef = database.getReference("users").child(userId).child("courses")
+
+        progressBar.visibility = ProgressBar.VISIBLE
+
+        coursesRef.addValueEventListener(object : ValueEventListener {
+            override fun onDataChange(snapshot: DataSnapshot) {
+                allCourses.clear()
+
+                snapshot.children.forEach { courseSnapshot ->
+                    val course = courseSnapshot.getValue(Course::class.java)?.copy(
+                        id = courseSnapshot.key ?: ""
+                    )
+                    if (course != null) {
+                        allCourses.add(course)
+                    }
+                }
+
+                progressBar.visibility = ProgressBar.GONE
+                updateUI()
+            }
+
+            override fun onCancelled(error: DatabaseError) {
+                progressBar.visibility = ProgressBar.GONE
+                Snackbar.make(
+                    recyclerView,
+                    "Failed to load courses: ${error.message}",
+                    Snackbar.LENGTH_SHORT
+                ).show()
+            }
+        })
+    }
+
+    private fun filterCourses(query: String) {
+        val filtered = allCourses.filter {
+            it.courseName.contains(query, ignoreCase = true) ||
+                    it.courseCode.contains(query, ignoreCase = true)
+        }
+        adapter.submitList(filtered)
+    }
+
+    private fun updateUI() {
+        if (allCourses.isEmpty()) {
+            recyclerView.visibility = RecyclerView.GONE
+            tvEmpty.visibility = TextView.VISIBLE
+        } else {
+            recyclerView.visibility = RecyclerView.VISIBLE
+            tvEmpty.visibility = TextView.GONE
+            adapter.submitList(allCourses)
+        }
+    }
+
+    private fun deleteCourse(course: Course) {
+        val userId = auth.currentUser?.uid ?: return
+        val courseRef = database.getReference("users").child(userId).child("courses")
+            .child(course.id)
+
+        courseRef.removeValue()
+            .addOnSuccessListener {
+                Snackbar.make(recyclerView, "Course deleted", Snackbar.LENGTH_SHORT).show()
+            }
+            .addOnFailureListener {
+                Snackbar.make(
+                    recyclerView,
+                    "Failed to delete course",
+                    Snackbar.LENGTH_SHORT
+                ).show()
+            }
+    }
+}

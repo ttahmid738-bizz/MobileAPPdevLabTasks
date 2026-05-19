@@ -1,0 +1,25 @@
+package com.university.coursemanager.model
+
+data class Course(
+    val id: String = "",
+    val courseName: String = "",
+    val courseCode: String = "",
+    val instructorName: String = "",
+    val creditHours: Int = 1,
+    val schedule: String = "",
+    val room: String = "",
+    val semester: String = ""
+) {
+    // Convert to map for Firebase
+    fun toMap(): Map<String, Any> {
+        return mapOf(
+            "courseName" to courseName,
+            "courseCode" to courseCode,
+            "instructorName" to instructorName,
+            "creditHours" to creditHours,
+            "schedule" to schedule,
+            "room" to room,
+            "semester" to semester
+        )
+    }
+}

@@ -1,0 +1,180 @@
+package com.university.coursemanager
+
+import android.os.Bundle
+import android.widget.*
+import androidx.appcompat.app.AlertDialog
+import androidx.appcompat.app.AppCompatActivity
+import com.google.android.material.snackbar.Snackbar
+import com.google.firebase.auth.FirebaseAuth
+import com.google.firebase.database.FirebaseDatabase
+import com.university.coursemanager.model.Course
+
+class EditCourseActivity : AppCompatActivity() {
+
+    private lateinit var etCourseName: EditText
+    private lateinit var etCourseCode: EditText
+    private lateinit var etInstructor: EditText
+    private lateinit var spinnerCredits: Spinner
+    private lateinit var etSchedule: EditText
+    private lateinit var etRoom: EditText
+    private lateinit var spinnerSemester: Spinner
+    private lateinit var btnUpdate: Button
+    private lateinit var btnDelete: Button
+    private lateinit var btnCancel: Button
+    private lateinit var progressBar: ProgressBar
+
+    private lateinit var course: Course
+    private val auth = FirebaseAuth.getInstance()
+    private val database = FirebaseDatabase.getInstance()
+
+    override fun onCreate(savedInstanceState: Bundle?) {
+        super.onCreate(savedInstanceState)
+        setContentView(R.layout.activity_edit_course)
+
+        // Setup ActionBar
+        supportActionBar?.setDisplayHomeAsUpEnabled(true)
+        supportActionBar?.title = "Edit Course"
+
+        // Get course from intent
+        course = intent.getSerializableExtra("course") as? Course ?: return
+
+        // Initialize UI
+        initializeUI()
+
+        // Pre-fill fields
+        prefillFields()
+
+        // Setup listeners
+        setupListeners()
+    }
+
+    override fun onSupportNavigateUp(): Boolean {
+        finish()
+        return true
+    }
+
+    private fun initializeUI() {
+        etCourseName = findViewById(R.id.etCourseName)
+        etCourseCode = findViewById(R.id.etCourseCode)
+        etInstructor = findViewById(R.id.etInstructor)
+        spinnerCredits = findViewById(R.id.spinnerCredits)
+        etSchedule = findViewById(R.id.etSchedule)
+        etRoom = findViewById(R.id.etRoom)
+        spinnerSemester = findViewById(R.id.spinnerSemester)
+        btnUpdate = findViewById(R.id.btnUpdate)
+        btnDelete = findViewById(R.id.btnDelete)
+        btnCancel = findViewById(R.id.btnCancel)
+        progressBar = findViewById(R.id.progressBar)
+    }
+
+    private fun prefillFields() {
+        etCourseName.setText(course.courseName)
+        etCourseCode.setText(course.courseCode)
+        etInstructor.setText(course.instructorName)
+        etSchedule.setText(course.schedule)
+        etRoom.setText(course.room)
+
+        // Set spinners
+        val creditsArray = resources.getStringArray(R.array.credits)
+        val creditIndex = creditsArray.indexOf(course.creditHours.toString())
+        if (creditIndex >= 0) spinnerCredits.setSelection(creditIndex)
+
+        val semesterArray = resources.getStringArray(R.array.semesters)
+        val semesterIndex = semesterArray.indexOf(course.semester)
+        if (semesterIndex >= 0) spinnerSemester.setSelection(semesterIndex)
+    }
+
+    private fun setupListeners() {
+        btnUpdate.setOnClickListener {
+            updateCourse()
+        }
+
+        btnDelete.setOnClickListener {
+            showDeleteConfirmation()
+        }
+
+        btnCancel.setOnClickListener {
+            finish()
+        }
+    }
+
+    private fun updateCourse() {
+        val courseName = etCourseName.text.toString().trim()
+        val courseCode = etCourseCode.text.toString().trim()
+        val instructor = etInstructor.text.toString().trim()
+        val credits = spinnerCredits.selectedItem.toString().toIntOrNull() ?: 1
+        val schedule = etSchedule.text.toString().trim()
+        val room = etRoom.text.toString().trim()
+        val semester = spinnerSemester.selectedItem.toString()
+
+        // Validation
+        if (courseName.isEmpty() || courseCode.isEmpty() || instructor.isEmpty()) {
+            Snackbar.make(findViewById(R.id.parent), "Please fill all required fields", Snackbar.LENGTH_SHORT).show()
+            return
+        }
+
+        progressBar.visibility = ProgressBar.VISIBLE
+        btnUpdate.isEnabled = false
+
+        val userId = auth.currentUser?.uid ?: return
+        val courseRef = database.getReference("users").child(userId).child("courses")
+            .child(course.id)
+
+        val updatedCourse = Course(
+            id = course.id,
+            courseName = courseName,
+            courseCode = courseCode,
+            instructorName = instructor,
+            creditHours = credits,
+            schedule = schedule,
+            room = room,
+            semester = semester
+        )
+
+        courseRef.setValue(updatedCourse)
+            .addOnSuccessListener {
+                progressBar.visibility = ProgressBar.GONE
+                btnUpdate.isEnabled = true
+                Toast.makeText(this, "Course updated successfully", Toast.LENGTH_SHORT).show()
+                finish()
+            }
+            .addOnFailureListener { e ->
+                progressBar.visibility = ProgressBar.GONE
+                btnUpdate.isEnabled = true
+                Snackbar.make(findViewById(R.id.parent), "Failed to update course: ${e.message}", Snackbar.LENGTH_SHORT).show()
+            }
+    }
+
+    private fun showDeleteConfirmation() {
+        AlertDialog.Builder(this)
+            .setTitle("Delete Course")
+            .setMessage("Are you sure you want to delete this course?")
+            .setPositiveButton("Delete") { _, _ ->
+                deleteCourse()
+            }
+            .setNegativeButton("Cancel", null)
+            .show()
+    }
+
+    private fun deleteCourse() {
+        progressBar.visibility = ProgressBar.VISIBLE
+        btnDelete.isEnabled = false
+
+        val userId = auth.currentUser?.uid ?: return
+        val courseRef = database.getReference("users").child(userId).child("courses")
+            .child(course.id)
+
+        courseRef.removeValue()
+            .addOnSuccessListener {
+                progressBar.visibility = ProgressBar.GONE
+                btnDelete.isEnabled = true
+                Toast.makeText(this, "Course deleted", Toast.LENGTH_SHORT).show()
+                finish()
+            }
+            .addOnFailureListener { e ->
+                progressBar.visibility = ProgressBar.GONE
+                btnDelete.isEnabled = true
+                Snackbar.make(findViewById(R.id.parent), "Failed to delete: ${e.message}", Snackbar.LENGTH_SHORT).show()
+            }
+    }
+}
